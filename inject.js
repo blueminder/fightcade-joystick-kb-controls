@@ -19,13 +19,14 @@ const cabControls = function (fcWindow) {
       const title = channelItem.getAttribute('title')
       const channelWrappers = fcDoc.querySelectorAll('.channelWrapper')
       const matchingChannelWrapper = [...channelWrappers].filter((c) => {
-        return c.querySelector('.channelInfo .name').getAttribute('title') === title
+        return c.querySelector('.channelContent') &&
+          c.querySelector('.channelInfo .name').getAttribute('title') === title
       })[0]
       matchingChannelWrapper.classList.add('selected')
-    }
 
-    if (actClick) {
-      channelItem.click()
+      if (actClick) {
+        channelItem.click()
+      }
     }
   }
 
