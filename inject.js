@@ -501,6 +501,17 @@ const cabControls = function (fcWindow) {
     }
   }
 
+  const btnHeld = new Map()
+  const allBtns = [up, down, left, right, toggle, cancel]
+  allBtns.forEach((b) =>
+    btnHeld.set(b, false)
+  )
+
+  let neutralX = true
+  let neutralY = true
+
+  const scrollableColumns = ['usersOnlineList', 'matchesList']
+
   fcWindow.addEventListener('gamepadconnected', function (e) {
     silentNotify('Game Controller Initialized')
 
@@ -514,24 +525,39 @@ const cabControls = function (fcWindow) {
           if (gp.buttons[b].pressed) {
             switch (b) {
               case up:
-                prevElement()
+                if (!btnHeld[b] || scrollableColumns.includes(currentColumn)) {
+                  prevElement()
+                }
                 break
               case down:
-                nextElement()
+                if (!btnHeld[b] || scrollableColumns.includes(currentColumn)) {
+                  nextElement()
+                }
                 break
               case left:
-                prevColumn()
+                if (!btnHeld[b]) {
+                  prevColumn()
+                }
                 break
               case right:
-                nextColumn()
+                if (!btnHeld[b]) {
+                  nextColumn()
+                }
                 break
               case toggle:
-                toggleAction()
+                if (!btnHeld[b]) {
+                  toggleAction()
+                }
                 break
               case cancel:
-                cancelAction()
+                if (!btnHeld[b]) {
+                  cancelAction()
+                }
                 break
             }
+            btnHeld[b] = true
+          } else {
+            btnHeld[b] = false
           }
         }
 
@@ -539,22 +565,34 @@ const cabControls = function (fcWindow) {
         const axisThreshold = 0.5
         for (let a = 0; a < 2; a++) {
           const axisVal = gp.axes[a]
+
+          if (axisVal < axisThreshold && axisVal > -axisThreshold) {
+            if (a === 0) {
+              neutralX = true
+            } else if (a === 1) {
+              neutralY = true
+            }
+          }
+
           if (Math.abs(axisVal) > axisThreshold) {
             // x axis
-            if (a === 0) {
+            if (a === 0 && neutralX) {
               if (axisVal < -axisThreshold) {
                 prevColumn()
               } else if (axisVal > axisThreshold) {
                 nextColumn()
               }
+              neutralX = false
             }
             // y axis
-            if (a === 1) {
+            if (a === 1 &&
+                (neutralY || scrollableColumns.includes(currentColumn))) {
               if (axisVal < -axisThreshold) {
                 prevElement()
               } else if (axisVal > axisThreshold) {
                 nextElement()
               }
+              neutralY = false
             }
           }
         }
