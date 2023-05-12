@@ -8,7 +8,7 @@ In the process of turning my mini arcade cabinet into a dedicated Fightcade mach
 Controls are optimized for switching between current open lobbies, challenging players, spectating matches, and loading the emulator offline for testing/training. As much as I could, I wanted to make sure that any actions performed via game controller did not require an external keyboard or mouse use to close external windows.
 
 ## Installation
-1. Download [inject.js](https://gist.githubusercontent.com/blueminder/818745061ac4b9dfd3b7f7f19d5343bb/raw/b5842673441a6b7ac30afd59ffd5b3d6e6c0f640/inject.js) and place it in your `Fightcade\fc2-electron\resources\app\inject` directory.
+1. Download [inject.js](https://gist.githubusercontent.com/blueminder/818745061ac4b9dfd3b7f7f19d5343bb/raw/6a83a39612c17978e0c82b2cee44fb52cc136437/inject.js) and place it in your `Fightcade\fc2-electron\resources\app\inject` directory.
 2. Open Fightcade and press a button on your game controller. You will see a notification that says *Game Controller Initialized*.
 
 ## Usage
