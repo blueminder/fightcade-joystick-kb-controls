@@ -451,12 +451,14 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  const up = 12
-  const down = 13
-  const left = 14
-  const right = 15
-  let toggle = 0
-  let cancel = 1
+  const scrollableColumns = ['usersOnlineList', 'matchesList']
+
+  // numpad
+  const keyHeld = new Map()
+  const allKeys = ['Numpad4', 'Numpad6', 'Numpad8', 'Numpad2', 'Numpad0', 'NumpadDecimal']
+  allKeys.forEach((b) =>
+    keyHeld.set(b, false)
+  )
 
   fcDoc.addEventListener('keydown', actKey)
 
@@ -470,29 +472,56 @@ const cabControls = function (fcWindow) {
     if (!e.getModifierState('NumLock')) {
       switch (e.code) {
         case 'Numpad4':
-          prevColumn()
+          if (!keyHeld[e.code]) {
+            prevColumn()
+          }
           break
         case 'Numpad6':
-          nextColumn()
+          if (!keyHeld[e.code]) {
+            nextColumn()
+          }
           break
         case 'Numpad8':
-          prevElement()
+          if (!keyHeld[e.code] || scrollableColumns.includes(currentColumn)) {
+            prevElement()
+          }
           break
         case 'Numpad2':
-          nextElement()
+          if (!keyHeld[e.code] || scrollableColumns.includes(currentColumn)) {
+            nextElement()
+          }
           break
         case 'Numpad0':
-          toggleAction()
+          if (!keyHeld[e.code]) {
+            toggleAction()
+          }
           break
         case 'NumpadDecimal':
-          cancelAction()
+          if (!keyHeld[e.code]) {
+            cancelAction()
+          }
           break
         case 'F6':
-          spectateRandomMatch()
+          if (!keyHeld[e.code]) {
+            spectateRandomMatch()
+          }
           break
       }
+      keyHeld[e.code] = true
     }
   }
+
+  fcDoc.addEventListener('keyup', function (e) {
+    keyHeld[e.code] = false
+  })
+
+  // gamepad
+  const up = 12
+  const down = 13
+  const left = 14
+  const right = 15
+  let toggle = 0
+  let cancel = 1
 
   function applyCustomControllerProfiles (gamepad) {
     if (gamepad.id === 'Astro city mini Arcade stick (Vendor: 0ca3 Product: 0028)') {
@@ -509,8 +538,6 @@ const cabControls = function (fcWindow) {
 
   let neutralX = true
   let neutralY = true
-
-  const scrollableColumns = ['usersOnlineList', 'matchesList']
 
   fcWindow.addEventListener('gamepadconnected', function (e) {
     silentNotify('Game Controller Initialized')
@@ -566,7 +593,7 @@ const cabControls = function (fcWindow) {
         for (let a = 0; a < 2; a++) {
           const axisVal = gp.axes[a]
 
-          if (axisVal < axisThreshold && axisVal > -axisThreshold) {
+          if (axisVal > -axisThreshold && axisVal < axisThreshold) {
             if (a === 0) {
               neutralX = true
             } else if (a === 1) {
