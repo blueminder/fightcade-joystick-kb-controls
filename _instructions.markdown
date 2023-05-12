@@ -61,6 +61,7 @@ You may also use your keyboard's number pad when __Num Lock__ is turned off.
 * Retro-bit Sega Saturn Controller
   * Detected as Switch Pro Controller
   * __A__ & __B__ Reversed
+* BEYEE Zero Delay USB Encoder
 
 ## Limitations
 The HTML5 Gamepad API is weird about the use of POV Hats, so any controllers that represent their D-Pads in that manner are currently not supported. This includes PS3 controllers, though you may use the analog joystick, if available.
