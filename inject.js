@@ -63,6 +63,24 @@ const cabControls = function (fcWindow) {
     setActiveChannel(channels[nextChannelIndex], true)
   }
 
+  function resetChannelItemStyles () {
+    const channelItems = fcDoc.querySelectorAll('.channelItem')
+    channelItems.forEach(function (c) {
+      c.style.borderColor = ''
+    })
+  }
+
+  function adjustColor (color, amount) {
+    return '#' + color.replace(/^#/, '').replace(/../g, (color) =>
+      ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2))
+  }
+
+  function defocusActiveChannel () {
+    const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
+    const acBorderColor = appStyle.getPropertyValue('--accentColor')
+    activeChannel.style.borderColor = adjustColor(acBorderColor, -200)
+  }
+
   // usersOnlineList
   function deselectUser (user) {
     user.style.backgroundColor = ''
@@ -310,7 +328,13 @@ const cabControls = function (fcWindow) {
     })
   }
 
-  function changeColumnAction () {
+  function changeColumnAction (notify = true) {
+    resetChannelItemStyles()
+
+    if (currentColumn !== 'channels') {
+      defocusActiveChannel()
+    }
+
     if (currentColumn !== 'matchesList') {
       defocusSelectedMatch()
     }
@@ -323,14 +347,16 @@ const cabControls = function (fcWindow) {
       currentNotification.close()
     }
 
-    if (currentColumn === 'channels') {
-      silentNotify('Switch Lobbies')
-    } else if (currentColumn === 'usersOnlineList') {
-      silentNotify('Challenge Players')
-      focusSelectedUser()
-    } else if (currentColumn === 'matchesList') {
-      silentNotify('Spectate Matches')
-      focusSelectedMatch()
+    if (notify) {
+      if (currentColumn === 'channels') {
+        silentNotify('Switch Lobbies')
+      } else if (currentColumn === 'usersOnlineList') {
+        silentNotify('Challenge Players')
+        focusSelectedUser()
+      } else if (currentColumn === 'matchesList') {
+        silentNotify('Spectate Matches')
+        focusSelectedMatch()
+      }
     }
 
     const testGameBtn = fcDoc.querySelector('.channelWrapper.selected .testGame')
@@ -453,11 +479,18 @@ const cabControls = function (fcWindow) {
 
   const scrollableColumns = ['usersOnlineList', 'matchesList']
 
+  // reset column to channels on click
+  fcDoc.addEventListener('click', function () {
+    columnIndex = 0
+    currentColumn = columns[columnIndex]
+    changeColumnAction(false)
+  })
+
   // numpad
   const keyHeld = new Map()
   const allKeys = ['Numpad4', 'Numpad6', 'Numpad8', 'Numpad2', 'Numpad0', 'NumpadDecimal']
-  allKeys.forEach((b) =>
-    keyHeld.set(b, false)
+  allKeys.forEach((k) =>
+    keyHeld.set(k, false)
   )
 
   fcDoc.addEventListener('keydown', actKey)
