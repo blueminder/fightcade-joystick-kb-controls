@@ -549,75 +549,80 @@ const cabControls = function (fcWindow) {
   })
 
   // gamepad
-  const up = 12
-  const down = 13
-  const left = 14
-  const right = 15
-  let toggle = 0
-  let cancel = 1
+  const allBtns = new Map()
+  allBtns.set('up', 12)
+  allBtns.set('down', 13)
+  allBtns.set('left', 14)
+  allBtns.set('right', 15)
+  allBtns.set('toggle', 0)
+  allBtns.set('cancel', 1)
 
   function applyCustomControllerProfiles (gamepad) {
     if (gamepad.id === 'Astro city mini Arcade stick (Vendor: 0ca3 Product: 0028)') {
-      toggle = 2
-      cancel = 1
+      allBtns.set('toggle', 2)
+      allBtns.set('cancel', 1)
     }
   }
 
   const btnHeld = new Map()
-  const allBtns = [up, down, left, right, toggle, cancel]
-  allBtns.forEach((b) =>
-    btnHeld.set(b, false)
-  )
-
-  let neutralX = true
-  let neutralY = true
+  const neutralX = new Map()
+  const neutralY = new Map()
+  const gpIntervalIds = new Map()
 
   fcWindow.addEventListener('gamepadconnected', function (e) {
     silentNotify('Game Controller Initialized')
 
-    setInterval(function () {
-      const gp = navigator.getGamepads()[e.gamepad.index]
+    const gpIntervalId = setInterval(function () {
+      if (!btnHeld.has(e.gamepad.index)) {
+        btnHeld.set(e.gamepad.index, new Map())
+        for (const btn of allBtns.keys()) {
+          btnHeld.get(e.gamepad.index).set(btn, false)
+        }
+        neutralX.set(e.gamepad.index, true)
+        neutralY.set(e.gamepad.index, true)
+      }
 
+      const gp = navigator.getGamepads()[e.gamepad.index]
       applyCustomControllerProfiles(gp)
 
       if (fcDoc.hasFocus()) {
         for (let b = 0; b < gp.buttons.length; b++) {
           if (gp.buttons[b].pressed) {
             switch (b) {
-              case up:
-                if (!btnHeld[b] || scrollableColumns.includes(currentColumn)) {
+              case allBtns.get('up'):
+                if (!btnHeld.get(gp.index)[b] || scrollableColumns.includes(currentColumn)) {
                   prevElement()
                 }
                 break
-              case down:
-                if (!btnHeld[b] || scrollableColumns.includes(currentColumn)) {
+              case allBtns.get('down'):
+                if (!btnHeld.get(gp.index)[b] || scrollableColumns.includes(currentColumn)) {
                   nextElement()
                 }
                 break
-              case left:
-                if (!btnHeld[b]) {
+              case allBtns.get('left'):
+                if (!btnHeld.get(gp.index)[b]) {
                   prevColumn()
                 }
                 break
-              case right:
-                if (!btnHeld[b]) {
+              case allBtns.get('right'):
+                if (!btnHeld.get(gp.index)[b]) {
                   nextColumn()
                 }
                 break
-              case toggle:
-                if (!btnHeld[b]) {
+              case allBtns.get('toggle'):
+                if (!btnHeld.get(gp.index)[b]) {
                   toggleAction()
                 }
                 break
-              case cancel:
-                if (!btnHeld[b]) {
+              case allBtns.get('cancel'):
+                if (!btnHeld.get(gp.index)[b]) {
                   cancelAction()
                 }
                 break
             }
-            btnHeld[b] = true
+            btnHeld.get(gp.index)[b] = true
           } else {
-            btnHeld[b] = false
+            btnHeld.get(gp.index)[b] = false
           }
         }
 
@@ -628,36 +633,47 @@ const cabControls = function (fcWindow) {
 
           if (axisVal > -axisThreshold && axisVal < axisThreshold) {
             if (a === 0) {
-              neutralX = true
+              neutralX.set(gp.index, true)
             } else if (a === 1) {
-              neutralY = true
+              neutralY.set(gp.index, true)
             }
           }
 
           if (Math.abs(axisVal) > axisThreshold) {
             // x axis
-            if (a === 0 && neutralX) {
+            if (a === 0 && neutralX.get(gp.index)) {
               if (axisVal < -axisThreshold) {
                 prevColumn()
               } else if (axisVal > axisThreshold) {
                 nextColumn()
               }
-              neutralX = false
+              neutralX[gp.index] = false
             }
             // y axis
             if (a === 1 &&
-                (neutralY || scrollableColumns.includes(currentColumn))) {
+                (neutralY.get(gp.index) || scrollableColumns.includes(currentColumn))) {
               if (axisVal < -axisThreshold) {
                 prevElement()
               } else if (axisVal > axisThreshold) {
                 nextElement()
               }
-              neutralY = false
+              neutralY[gp.index] = false
             }
           }
         }
       }
     }, 120)
+
+    gpIntervalIds.set(e.gamepad.index, gpIntervalId)
+  })
+
+  fcWindow.addEventListener('gamepaddisconnected', function (e) {
+    silentNotify('Game Controller Disconnected')
+    clearInterval(gpIntervalIds.get(e.gamepad.index))
+    gpIntervalIds.delete(e.gamepad.index)
+    btnHeld.delete(e.gamepad.index)
+    neutralX.delete(e.gamepad.index)
+    neutralY.delete(e.gamepad.index)
   })
 }
 
