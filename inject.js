@@ -439,11 +439,13 @@ const cabControls = function (fcWindow) {
   }
 
   function toggleAction () {
-    const pendingChallenges = fcDoc.querySelectorAll('.messageWrapper.challengeRequested .message .challengeContent')
+    const pendingChallenges = fcDoc.querySelectorAll(
+      '.messageWrapper.challengeRequested .message .challengeContent .accept-challenge'
+    )
 
     if (pendingChallenges.length > 0) {
       const lastChallenge = [...pendingChallenges].slice(-1)[0]
-      lastChallenge.querySelector('.accept-challenge').click()
+      lastChallenge.click()
     } else {
       if (currentColumn === 'usersOnlineList') {
         toggleSelectedUser()
@@ -460,11 +462,12 @@ const cabControls = function (fcWindow) {
   }
 
   function cancelAction () {
-    const pendingChallenges = fcDoc.querySelectorAll('.messageWrapper.challengeRequested .message .challengeContent')
-
+    const pendingChallenges = fcDoc.querySelectorAll(
+      '.messageWrapper.requestChallenge .cancel-challenge, .messageWrapper.challengeRequested .decline-challenge'
+    )
     if (pendingChallenges.length > 0) {
-      const lastChallenge = [...pendingChallenges].slice(-1)[0]
-      lastChallenge.querySelector('.decline-challenge').click()
+      const denyLastChallengeRequest = [...pendingChallenges].slice(-1)[0]
+      denyLastChallengeRequest.click()
     }
   }
 
