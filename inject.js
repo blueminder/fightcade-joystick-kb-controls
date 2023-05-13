@@ -487,11 +487,20 @@ const cabControls = function (fcWindow) {
   })
 
   // numpad
+  const allKeys = new Map()
+  allKeys.set('up', 'Numpad8')
+  allKeys.set('down', 'Numpad2')
+  allKeys.set('left', 'Numpad4')
+  allKeys.set('right', 'Numpad6')
+  allKeys.set('toggle', 'Numpad0')
+  allKeys.set('cancel', 'NumpadDecimal')
+
+  allKeys.set('spectateRandomMatch', 'F6')
+
   const keyHeld = new Map()
-  const allKeys = ['Numpad4', 'Numpad6', 'Numpad8', 'Numpad2', 'Numpad0', 'NumpadDecimal']
-  allKeys.forEach((k) =>
-    keyHeld.set(k, false)
-  )
+  for (const val of allKeys.values()) {
+    keyHeld.set(val, false)
+  }
 
   fcDoc.addEventListener('keydown', actKey)
 
@@ -504,48 +513,48 @@ const cabControls = function (fcWindow) {
 
     if (!e.getModifierState('NumLock')) {
       switch (e.code) {
-        case 'Numpad4':
-          if (!keyHeld[e.code]) {
+        case allKeys.get('left'):
+          if (!keyHeld.get(e.code)) {
             prevColumn()
           }
           break
-        case 'Numpad6':
-          if (!keyHeld[e.code]) {
+        case allKeys.get('right'):
+          if (!keyHeld.get(e.code)) {
             nextColumn()
           }
           break
-        case 'Numpad8':
-          if (!keyHeld[e.code] || scrollableColumns.includes(currentColumn)) {
+        case allKeys.get('up'):
+          if (!keyHeld.get(e.code) || scrollableColumns.includes(currentColumn)) {
             prevElement()
           }
           break
-        case 'Numpad2':
-          if (!keyHeld[e.code] || scrollableColumns.includes(currentColumn)) {
+        case allKeys.get('down'):
+          if (!keyHeld.get(e.code) || scrollableColumns.includes(currentColumn)) {
             nextElement()
           }
           break
-        case 'Numpad0':
-          if (!keyHeld[e.code]) {
+        case allKeys.get('toggle'):
+          if (!keyHeld.get(e.code)) {
             toggleAction()
           }
           break
-        case 'NumpadDecimal':
-          if (!keyHeld[e.code]) {
+        case allKeys.get('cancel'):
+          if (!keyHeld.get(e.code)) {
             cancelAction()
           }
           break
-        case 'F6':
-          if (!keyHeld[e.code]) {
+        case allKeys.get('spectateRandomMatch'):
+          if (!keyHeld.get(e.code)) {
             spectateRandomMatch()
           }
           break
       }
-      keyHeld[e.code] = true
+      keyHeld.set(e.code, true)
     }
   }
 
   fcDoc.addEventListener('keyup', function (e) {
-    keyHeld[e.code] = false
+    keyHeld.set(e.code, false)
   })
 
   // gamepad
