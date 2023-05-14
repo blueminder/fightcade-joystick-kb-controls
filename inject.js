@@ -1,7 +1,6 @@
 // Fightcade Game Controller / Numpad Control
 // Author: blueminder (Enrique Santos)
 // https://enriquesantos.net/
-
 const cabControls = function (fcWindow) {
   const fcDoc = fcWindow.document
   const appStyle = fcWindow.getComputedStyle(fcDoc.querySelector('#app'))
@@ -14,13 +13,21 @@ const cabControls = function (fcWindow) {
   let currentColumn = columns[columnIndex]
 
   // channels
-  function setActiveChannel (channelItem, actClick = false) {
+  function setActiveChannel(channelItem, actClick = false) {
     if (channelItem) {
       const title = channelItem.getAttribute('title')
+      // search
+      if (!title) {
+        if (actClick) {
+          channelItem.click()
+        }
+        return
+      }
       const channelWrappers = fcDoc.querySelectorAll('.channelWrapper')
       const matchingChannelWrapper = [...channelWrappers].filter((c) => {
         return c.querySelector('.channelContent') &&
-          c.querySelector('.channelInfo .name').getAttribute('title') === title
+          c.querySelector('.channelInfo .name')
+          .getAttribute('title') === title
       })[0]
       matchingChannelWrapper.classList.add('selected')
 
@@ -30,19 +37,27 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function deselectChannel () {
+  function deselectChannel() {
     const selectedChannelWrapper = fcDoc.querySelector('.channelWrapper.selected')
     if (selectedChannelWrapper) {
       selectedChannelWrapper.classList.remove('selected')
     }
   }
 
-  function togglePrevChannel () {
+  function togglePrevChannel() {
     deselectChannel()
+    resetChannelItemStyles()
 
-    const channels = fcDoc.querySelector('.channelsList').querySelectorAll('.channelItem')
+    const channels = fcDoc.querySelector('.channelsList')
+      .querySelectorAll('.channelItem, .buttonItemWrapper')
     const currentChannel = fcDoc.querySelector('.channelsList .active')
-    let prevChannelIndex = [...channels].indexOf(currentChannel) - 1
+
+    let prevChannelIndex = -1
+
+    if (currentChannel) {
+      prevChannelIndex = [...channels].indexOf(currentChannel) - 1
+    }
+
     if (prevChannelIndex < 0) {
       prevChannelIndex = channels.length - 1
     }
@@ -50,12 +65,20 @@ const cabControls = function (fcWindow) {
     setActiveChannel(channels[prevChannelIndex], true)
   }
 
-  function toggleNextChannel () {
+  function toggleNextChannel() {
     deselectChannel()
+    resetChannelItemStyles()
 
-    const channels = fcDoc.querySelector('.channelsList').querySelectorAll('.channelItem')
+    const channels = fcDoc.querySelector('.channelsList')
+      .querySelectorAll('.channelItem, .buttonItemWrapper')
     const currentChannel = fcDoc.querySelector('.channelsList .active')
-    let nextChannelIndex = [...channels].indexOf(currentChannel) + 1
+
+    let nextChannelIndex = 0
+
+    if (currentChannel) {
+      nextChannelIndex = [...channels].indexOf(currentChannel) + 1
+    }
+
     if (nextChannelIndex === channels.length) {
       nextChannelIndex = 0
     }
@@ -64,36 +87,236 @@ const cabControls = function (fcWindow) {
   }
 
   function leaveChannel() {
-    const currentChannelWrapper = fcDoc.querySelector('.channelsList .active').parentElement
-    const leaveChannelBtn = currentChannelWrapper.querySelector('.leaveChannelItem')
-    leaveChannelBtn.click()
+    // search
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+    if (searchActive) {
+      const currentSearchEntry = fcDoc.querySelector(
+        '.searchResultsWrapper .searchResultsGrid .channelWrapper.selected, .contentWrapper .gridWrapper.selected'
+      )
+      deselectSearchEntry(currentSearchEntry)
+
+      const searchBtn = fcDoc.querySelector('.channelsList .buttonItemWrapper')
+      searchBtn.click()
+      return
+    }
+
+    const currentChannel = fcDoc.querySelector('.channelsList .channelItem.active')
+    if (currentChannel) {
+      const currentChannelWrapper = currentChannel.parentElement
+      const leaveChannelBtn = currentChannelWrapper.querySelector('.leaveChannelItem')
+      if (leaveChannelBtn) {
+        leaveChannelBtn.click()
+      }
+    }
   }
 
-  function resetChannelItemStyles () {
+  function resetChannelItemStyles() {
     const channelItems = fcDoc.querySelectorAll('.channelItem')
     channelItems.forEach(function (c) {
       c.style.borderColor = ''
     })
+
+    const searchIcon = fcDoc.querySelector('.searchIcon')
+    searchIcon.style.fill = ''
   }
 
-  function adjustColor (color, amount) {
-    return '#' + color.replace(/^#/, '').replace(/../g, (color) =>
-      ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2))
+  function adjustColor(color, amount) {
+    return '#' + color.replace(/^#/, '')
+      .replace(/../g, (color) =>
+        ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount))
+          .toString(16))
+        .substr(-2))
   }
 
-  function defocusActiveChannel () {
-    const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
-    const acBorderColor = appStyle.getPropertyValue('--accentColor')
-    activeChannel.style.borderColor = adjustColor(acBorderColor, -200)
+  function defocusActiveChannel() {
+    const activeChannel = fcDoc.querySelector('.channelsList .active')
+    if (!activeChannel) {
+      return
+    }
+    const accentColor = appStyle.getPropertyValue('--accentColor')
+    const searchIcon = activeChannel.querySelector('.searchIcon')
+
+    if (searchIcon) {
+      searchIcon.style.fill = adjustColor(accentColor, -80)
+    } else {
+      activeChannel.style.borderColor = adjustColor(accentColor, -200)
+    }
+  }
+
+  function deselectSearchEntry(searchEntry) {
+    if (!searchEntry) {
+      return
+    }
+
+    searchEntry.style.borderColor = ''
+    searchEntry.style.borderStyle = ''
+    searchEntry.classList.remove('selected')
+
+    if (searchEntry.parentElement._prevClass === 'welcomeListGrid' ||
+      searchEntry.parentElement._prevClass === 'welcomeListGridBig') {
+      searchEntry.parentElement.style.gridAutoRows = '0'
+    }
+  }
+
+  function selectSearchEntry(searchEntry) {
+    if (!searchEntry) {
+      return
+    }
+
+    defocusActiveChannel()
+
+    let textFilter = fcDoc.querySelector('.welcomeWrapper .text-filter')
+    if (searchEntry.parentElement._prevClass === 'searchResultsGrid') {
+      textFilter = fcDoc.querySelector('.searchWrapper .text-filter')
+    }
+    textFilter.blur()
+
+    const accentColor = appStyle.getPropertyValue('--accentColor')
+    searchEntry.style.borderColor = accentColor
+    searchEntry.style.borderStyle = 'solid'
+    searchEntry.classList.add('selected')
+
+    if (searchEntry.parentElement._prevClass === 'welcomeListGrid') {
+      searchEntry.parentElement.style.gridAutoRows = 'auto'
+    }
+
+    if (searchEntry.parentElement._prevClass === 'welcomeListGridBig') {
+      searchEntry.parentElement.style.gridAutoRows = 'unset'
+    }
+
+    searchEntry.scrollIntoViewIfNeeded()
+  }
+
+  function toggleSelectedSearchEntry() {
+    let searchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+    if (fcDoc.querySelector('.welcomeWrapper')
+      .style.display === 'none') {
+      searchEntry = fcDoc.querySelector(
+        '.searchResultsGrid .channelWrapper.selected, .searchResultsWrapper .button-alt.selected:not(.disabled)'
+      )
+    }
+
+    if (!searchEntry) {
+      return false
+    }
+
+    const joinBtn = searchEntry.querySelector('.joinButton')
+    if (joinBtn) {
+      joinBtn.click()
+      return true
+    }
+
+    const browseBtn = searchEntry.querySelector('.browseButton')
+    if (browseBtn) {
+      browseBtn.click()
+      return true
+    }
+
+    deselectSearchEntry(searchEntry)
+    searchEntry.click()
+    return true
+  }
+
+  function prevSearchEntry() {
+    if (fcDoc.querySelector('.welcomeWrapper')
+      .style.display === 'none') {
+      // search results
+      const currentSearchEntry = fcDoc.querySelector(
+        '.searchResultsGrid .channelWrapper.selected, .searchResultsWrapper .button-alt.selected:not(.disabled)'
+      )
+      let targetSearchEntry = fcDoc.querySelector('.searchResultsWrapper .searchResultsGrid .channelWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll(
+          '.searchResultsGrid .channelWrapper, .searchResultsWrapper .button-alt:not(.disabled)'
+        )
+        let prevEntryIndex = [...searchEntries].indexOf(currentSearchEntry) - 1
+        if (prevEntryIndex < 0) {
+          prevEntryIndex = searchEntries.length - 1
+        }
+        if (searchEntries[prevEntryIndex]) {
+          targetSearchEntry = searchEntries[prevEntryIndex]
+        }
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    } else {
+      // welcome screen
+      const currentSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+      let targetSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll('.contentWrapper .gridWrapper')
+        let prevEntryIndex = [...searchEntries].indexOf(currentSearchEntry) - 1
+        if (prevEntryIndex < 0) {
+          prevEntryIndex = searchEntries.length - 1
+        }
+        if (searchEntries[prevEntryIndex]) {
+          targetSearchEntry = searchEntries[prevEntryIndex]
+        }
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    }
+  }
+
+  function nextSearchEntry() {
+    if (fcDoc.querySelector('.welcomeWrapper')
+      .style.display === 'none') {
+      // search results
+      const currentSearchEntry = fcDoc.querySelector(
+        '.searchResultsGrid .channelWrapper.selected, .searchResultsWrapper .button-alt.selected:not(.disabled)'
+      )
+      let targetSearchEntry = fcDoc.querySelector('.searchResultsWrapper .searchResultsGrid .channelWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll(
+          '.searchResultsGrid .channelWrapper, .searchResultsWrapper .button-alt:not(.disabled)'
+        )
+        let nextEntryIndex = [...searchEntries].indexOf(currentSearchEntry) + 1
+        if (nextEntryIndex > searchEntries.length - 1) {
+          nextEntryIndex = 0
+        }
+        if (searchEntries[nextEntryIndex]) {
+          targetSearchEntry = searchEntries[nextEntryIndex]
+        }
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    } else {
+      // welcome screen
+      const currentSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+
+      let targetSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll('.contentWrapper .gridWrapper')
+        let nextEntryIndex = [...searchEntries].indexOf(currentSearchEntry) + 1
+        if (nextEntryIndex > searchEntries.length - 1) {
+          nextEntryIndex = 0
+        }
+        if (searchEntries[nextEntryIndex]) {
+          targetSearchEntry = searchEntries[nextEntryIndex]
+        }
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    }
   }
 
   // usersOnlineList
-  function deselectUser (user) {
+  function deselectUser(user) {
     user.style.backgroundColor = ''
     user.classList.remove('selected')
   }
 
-  function selectUser (user) {
+  function selectUser(user) {
     const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
     setActiveChannel(activeChannel)
 
@@ -110,7 +333,7 @@ const cabControls = function (fcWindow) {
     user.scrollIntoViewIfNeeded()
   }
 
-  function selectPrevUser () {
+  function selectPrevUser() {
     const currentUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem.selected')
 
     let targetUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem')
@@ -128,7 +351,7 @@ const cabControls = function (fcWindow) {
     selectUser(targetUser)
   }
 
-  function selectNextUser () {
+  function selectNextUser() {
     const currentUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem.selected')
 
     let targetUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem')
@@ -146,7 +369,7 @@ const cabControls = function (fcWindow) {
     selectUser(targetUser)
   }
 
-  function focusSelectedUser () {
+  function focusSelectedUser() {
     const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
     setActiveChannel(activeChannel)
 
@@ -161,7 +384,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function defocusSelectedUser () {
+  function defocusSelectedUser() {
     const unfocusedSelectColor = appStyle.getPropertyValue('--mainColor-darker-trans-hi')
     const currentUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem.selected')
     if (currentUser) {
@@ -169,7 +392,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function toggleSelectedUser () {
+  function toggleSelectedUser() {
     const selectedUser = fcDoc.querySelector('.channelWrapper.selected .usersOnlineList .userItem.selected')
     if (selectedUser) {
       selectedUser.click()
@@ -178,12 +401,12 @@ const cabControls = function (fcWindow) {
   }
 
   // matchList
-  function deselectMatch (match) {
+  function deselectMatch(match) {
     match.style.backgroundColor = ''
     match.classList.remove('selected')
   }
 
-  function selectMatch (match) {
+  function selectMatch(match) {
     const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
     setActiveChannel(activeChannel)
 
@@ -202,7 +425,7 @@ const cabControls = function (fcWindow) {
     match.scrollIntoViewIfNeeded()
   }
 
-  function selectPrevMatch () {
+  function selectPrevMatch() {
     const currentMatch = fcDoc.querySelector(
       '.channelWrapper.selected .usersListToolbar .matchesList .matchItem.selected'
     )
@@ -210,7 +433,8 @@ const cabControls = function (fcWindow) {
     let targetMatch = fcDoc.querySelector('.channelWrapper.selected .usersListToolbar .matchesList .matchItem')
 
     if (currentMatch) {
-      const matches = fcDoc.querySelectorAll('.channelWrapper.selected .usersListToolbar .matchesList .matchItem')
+      const matches = fcDoc.querySelectorAll(
+        '.channelWrapper.selected .usersListToolbar .matchesList .matchItem')
       let prevMatchIndex = [...matches].indexOf(currentMatch) - 1
       if (prevMatchIndex < 0) {
         prevMatchIndex = matches.length - 1
@@ -223,7 +447,7 @@ const cabControls = function (fcWindow) {
     selectMatch(targetMatch)
   }
 
-  function selectNextMatch () {
+  function selectNextMatch() {
     const currentMatch = fcDoc.querySelector('.channelWrapper.selected .matchesList .matchItem.selected')
 
     let targetMatch = fcDoc.querySelector('.channelWrapper.selected .matchesList .matchItem')
@@ -242,7 +466,7 @@ const cabControls = function (fcWindow) {
     selectMatch(targetMatch)
   }
 
-  function focusSelectedMatch () {
+  function focusSelectedMatch() {
     const activeChannel = fcDoc.querySelector('.channelsList .channelItem.active')
     setActiveChannel(activeChannel)
 
@@ -257,7 +481,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function defocusSelectedMatch () {
+  function defocusSelectedMatch() {
     const unfocusedSelectColor = appStyle.getPropertyValue('--mainColor-darker-trans-hi')
     const currentMatch = fcDoc.querySelector(
       '.channelWrapper.selected .usersListToolbar .matchesList .matchItem.selected'
@@ -267,13 +491,13 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function toggleSelectedMatch () {
+  function toggleSelectedMatch() {
     const selectedMatch = fcDoc.querySelector('.channelWrapper.selected .matchesList .matchItem.selected')
     selectedMatch.click()
     selectedMatch.click()
   }
 
-  function reconcileClickedChannels () {
+  function reconcileClickedChannels() {
     const selectedChannel = fcDoc.querySelector('.channelWrapper.selected .channelInfo .name')
     if (!selectedChannel) {
       return
@@ -304,7 +528,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function refreshColumns () {
+  function refreshColumns() {
     reconcileClickedChannels()
 
     columns = allColumns
@@ -328,13 +552,13 @@ const cabControls = function (fcWindow) {
     columns = allColumns.filter((c) => !toRemove.includes(c))
   }
 
-  function silentNotify (msg) {
+  function silentNotify(msg) {
     currentNotification = new fcWindow.Notification(msg, {
       silent: true
     })
   }
 
-  function changeColumnAction (notify = true) {
+  function changeColumnAction(notify = true) {
     resetChannelItemStyles()
 
     if (currentColumn !== 'channels') {
@@ -388,7 +612,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function prevColumn () {
+  function prevColumn() {
     if (!fcDoc.querySelector('.channelItem.active')) {
       return
     }
@@ -405,7 +629,7 @@ const cabControls = function (fcWindow) {
     changeColumnAction()
   }
 
-  function nextColumn () {
+  function nextColumn() {
     if (!fcDoc.querySelector('.channelItem.active')) {
       return
     }
@@ -422,7 +646,7 @@ const cabControls = function (fcWindow) {
     changeColumnAction()
   }
 
-  function prevElement () {
+  function prevElement() {
     refreshColumns()
     if (currentColumn === 'channels') {
       togglePrevChannel()
@@ -433,7 +657,7 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function nextElement () {
+  function nextElement() {
     refreshColumns()
     if (currentColumn === 'channels') {
       toggleNextChannel()
@@ -444,7 +668,11 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function toggleAction () {
+  function toggleAction(condition) {
+    if (!condition) {
+      return
+    }
+
     const pendingChallenges = fcDoc.querySelectorAll(
       '.messageWrapper.challengeRequested .message .challengeContent .accept-challenge'
     )
@@ -453,6 +681,10 @@ const cabControls = function (fcWindow) {
       const lastChallenge = [...pendingChallenges].slice(-1)[0]
       lastChallenge.click()
     } else {
+      const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc
+        .querySelector('.searchWrapper')
+        .style.display === ''
+
       if (currentColumn === 'usersOnlineList') {
         toggleSelectedUser()
       } else if (currentColumn === 'matchesList') {
@@ -463,11 +695,15 @@ const cabControls = function (fcWindow) {
       } else if (currentColumn === 'trainingGame') {
         const trainBtn = fcDoc.querySelector('.channelWrapper.selected .trainingGame')
         trainBtn.click()
+      } else if (searchActive) {
+        if (!toggleSelectedSearchEntry()) {
+          nextSearchEntry()
+        }
       }
     }
   }
 
-  function cancelAction () {
+  function cancelAction() {
     const pendingChallenges = fcDoc.querySelectorAll(
       '.messageWrapper.requestChallenge .cancel-challenge, .messageWrapper.challengeRequested .decline-challenge'
     )
@@ -480,12 +716,52 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function spectateRandomMatch () {
+  function spectateRandomMatch() {
     const matches = fcDoc.querySelectorAll('.channelWrapper.selected .matchesList .matchItem')
     const randomIndex = Math.floor(Math.random() * matches.length)
     if (matches[randomIndex]) {
       matches[randomIndex].click()
       matches[randomIndex].click()
+    }
+  }
+
+  function upAction(condition = true) {
+    if (condition || scrollableColumns.includes(currentColumn)) {
+      prevElement()
+    }
+  }
+
+  function downAction(condition = true) {
+    if (condition || scrollableColumns.includes(currentColumn)) {
+      nextElement()
+    }
+  }
+
+  function leftAction(condition = true) {
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+
+    if (condition || searchActive) {
+      if (searchActive) {
+        prevSearchEntry()
+      } else {
+        prevColumn()
+      }
+    }
+  }
+
+  function rightAction(condition = true) {
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+
+    if (condition || searchActive) {
+      if (searchActive) {
+        nextSearchEntry()
+      } else {
+        nextColumn()
+      }
     }
   }
 
@@ -516,7 +792,7 @@ const cabControls = function (fcWindow) {
 
   fcDoc.addEventListener('keydown', actKey)
 
-  function actKey (e) {
+  function actKey(e) {
     if (!fcDoc.hasFocus()) {
       return
     }
@@ -525,41 +801,29 @@ const cabControls = function (fcWindow) {
 
     if (!e.getModifierState('NumLock')) {
       switch (e.code) {
-        case allKeys.get('left'):
-          if (!keyHeld.get(e.code)) {
-            prevColumn()
-          }
-          break
-        case allKeys.get('right'):
-          if (!keyHeld.get(e.code)) {
-            nextColumn()
-          }
-          break
-        case allKeys.get('up'):
-          if (!keyHeld.get(e.code) || scrollableColumns.includes(currentColumn)) {
-            prevElement()
-          }
-          break
-        case allKeys.get('down'):
-          if (!keyHeld.get(e.code) || scrollableColumns.includes(currentColumn)) {
-            nextElement()
-          }
-          break
-        case allKeys.get('toggle'):
-          if (!keyHeld.get(e.code)) {
-            toggleAction()
-          }
-          break
-        case allKeys.get('cancel'):
-          if (!keyHeld.get(e.code)) {
-            cancelAction()
-          }
-          break
-        case allKeys.get('spectateRandomMatch'):
-          if (!keyHeld.get(e.code)) {
-            spectateRandomMatch()
-          }
-          break
+      case allKeys.get('up'):
+        upAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('down'):
+        downAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('left'):
+        leftAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('right'):
+        rightAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('toggle'):
+        toggleAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('cancel'):
+        cancelAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('spectateRandomMatch'):
+        if (!keyHeld.get(e.code)) {
+          spectateRandomMatch()
+        }
+        break
       }
       keyHeld.set(e.code, true)
     }
@@ -578,7 +842,7 @@ const cabControls = function (fcWindow) {
   allBtns.set('toggle', 0)
   allBtns.set('cancel', 1)
 
-  function applyCustomControllerProfiles (gamepad) {
+  function applyCustomControllerProfiles(gamepad) {
     if (gamepad.id === 'Astro city mini Arcade stick (Vendor: 0ca3 Product: 0028)') {
       allBtns.set('toggle', 2)
       allBtns.set('cancel', 1)
@@ -597,7 +861,8 @@ const cabControls = function (fcWindow) {
       if (!btnHeld.has(e.gamepad.index)) {
         btnHeld.set(e.gamepad.index, new Map())
         for (const btn of allBtns.keys()) {
-          btnHeld.get(e.gamepad.index).set(btn, false)
+          btnHeld.get(e.gamepad.index)
+            .set(btn, false)
         }
         neutralX.set(e.gamepad.index, true)
         neutralY.set(e.gamepad.index, true)
@@ -610,36 +875,24 @@ const cabControls = function (fcWindow) {
         for (let b = 0; b < gp.buttons.length; b++) {
           if (gp.buttons[b].pressed) {
             switch (b) {
-              case allBtns.get('up'):
-                if (!btnHeld.get(gp.index)[b] || scrollableColumns.includes(currentColumn)) {
-                  prevElement()
-                }
-                break
-              case allBtns.get('down'):
-                if (!btnHeld.get(gp.index)[b] || scrollableColumns.includes(currentColumn)) {
-                  nextElement()
-                }
-                break
-              case allBtns.get('left'):
-                if (!btnHeld.get(gp.index)[b]) {
-                  prevColumn()
-                }
-                break
-              case allBtns.get('right'):
-                if (!btnHeld.get(gp.index)[b]) {
-                  nextColumn()
-                }
-                break
-              case allBtns.get('toggle'):
-                if (!btnHeld.get(gp.index)[b]) {
-                  toggleAction()
-                }
-                break
-              case allBtns.get('cancel'):
-                if (!btnHeld.get(gp.index)[b]) {
-                  cancelAction()
-                }
-                break
+            case allBtns.get('up'):
+              upAction(!btnHeld.get(gp.index)[b])
+              break
+            case allBtns.get('down'):
+              downAction(!btnHeld.get(gp.index)[b])
+              break
+            case allBtns.get('left'):
+              leftAction(!btnHeld.get(gp.index)[b])
+              break
+            case allBtns.get('right'):
+              rightAction(!btnHeld.get(gp.index)[b])
+              break
+            case allBtns.get('toggle'):
+              toggleAction(!btnHeld.get(gp.index)[b])
+              break
+            case allBtns.get('cancel'):
+              cancelAction(!btnHeld.get(gp.index)[b])
+              break
             }
             btnHeld.get(gp.index)[b] = true
           } else {
@@ -662,23 +915,22 @@ const cabControls = function (fcWindow) {
 
           if (Math.abs(axisVal) > axisThreshold) {
             // x axis
-            if (a === 0 && neutralX.get(gp.index)) {
+            if (a === 0) {
               if (axisVal < -axisThreshold) {
-                prevColumn()
+                leftAction(neutralX.get(gp.index))
               } else if (axisVal > axisThreshold) {
-                nextColumn()
+                rightAction(neutralX.get(gp.index))
               }
-              neutralX[gp.index] = false
+              neutralX.set(gp.index, false)
             }
             // y axis
-            if (a === 1 &&
-                (neutralY.get(gp.index) || scrollableColumns.includes(currentColumn))) {
+            if (a === 1) {
               if (axisVal < -axisThreshold) {
-                prevElement()
+                upAction(neutralY.get(gp.index))
               } else if (axisVal > axisThreshold) {
-                nextElement()
+                downAction(neutralY.get(gp.index))
               }
-              neutralY[gp.index] = false
+              neutralY.set(gp.index, false)
             }
           }
         }
