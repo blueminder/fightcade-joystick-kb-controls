@@ -63,6 +63,12 @@ const cabControls = function (fcWindow) {
     setActiveChannel(channels[nextChannelIndex], true)
   }
 
+  function leaveChannel() {
+    const currentChannelWrapper = fcDoc.querySelector('.channelsList .active').parentElement
+    const leaveChannelBtn = currentChannelWrapper.querySelector('.leaveChannelItem')
+    leaveChannelBtn.click()
+  }
+
   function resetChannelItemStyles () {
     const channelItems = fcDoc.querySelectorAll('.channelItem')
     channelItems.forEach(function (c) {
@@ -468,6 +474,9 @@ const cabControls = function (fcWindow) {
     if (pendingChallenges.length > 0) {
       const denyLastChallengeRequest = [...pendingChallenges].slice(-1)[0]
       denyLastChallengeRequest.click()
+    }
+    if (currentColumn === 'channels') {
+      leaveChannel()
     }
   }
 
