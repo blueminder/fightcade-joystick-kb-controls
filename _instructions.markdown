@@ -1,11 +1,11 @@
-# Fightcade Game Controller / Numpad Control 
+# Fightcade Game Controller / Numpad Control
 * Author: blueminder (Enrique Santos)
 * Created: 2023-05-11
 
 ## Motivation
 In the process of turning my mini arcade cabinet into a dedicated Fightcade machine, I became annoyed at switching between joystick & mouse while looking for new matches. To scratch this itch, I started adding joystick/keyboard navigation to the Fightcade UI.
 
-Controls are optimized for switching between current open lobbies, challenging players, spectating matches, and loading the emulator offline for testing/training. As much as I could, I wanted to make sure that any actions performed via game controller did not require an external keyboard or mouse use to close external windows.
+Controls are optimized for switching between game lobbies, challenging players, spectating matches, and loading the emulator offline for testing/training. As much as I could, I wanted to make sure that any actions performed via game controller did not require an external keyboard or mouse use to close external windows.
 
 ## Installation
 1. Download [inject.js](https://gist.githubusercontent.com/blueminder/818745061ac4b9dfd3b7f7f19d5343bb/raw/b2d476370eefc449cd1bf64216ef1f3bfa5292c8/inject.js) and place it in your `Fightcade\fc2-electron\resources\app\inject` directory.
@@ -24,10 +24,15 @@ __Left__ and __Right__ switches between the following lanes when they are availa
 
 A Notification will show up when you switch between lanes.
 
+In Search:
+* Selects Game
+
 __Up__ and __Down__
 * Changes Active Game Lobby
 * Selects Available Players
-* Select Active Match
+* Selects Active Match
+* Selects Search Categories (On Search Welcome Screen)
+* Selects Search Result On Next Row
 
 __Button A (or 0)__
 * Accepts Last Pending Challenge (in any lane)
@@ -36,9 +41,20 @@ __Button A (or 0)__
 * Spectates Match
 * Opens Test Game
 * Opens Training Mode
+* Opens Selected Game Lobby (In Search)
 
 __Button B (or 1)__
 * Declines Last Pending Challenge (in any lane)
+* Deselects Search Result
+
+__Button Y (or 3)__
+* Toggle Search / Lobby Selection
+
+__Left Bumper__
+* Select Previous Game Lobby
+
+__Right Bumper__
+* Select Next Game Lobby
 
 ### Keyboard Number Pad
 You may also use your keyboard's number pad when __Num Lock__ is turned off.
@@ -46,6 +62,9 @@ You may also use your keyboard's number pad when __Num Lock__ is turned off.
 * __8__ & __2__ correspond with __Up__ & __Down__
 * __0__ corresponds with __Button A__
 * __.__ corresponds with __Button B__
+* __9__ corresponds with __Button Y__
+* __/__ corresponds with __Left Bumper__
+* __*__ corresponds with __Right Bumper__
 
 ## Tested On
 * Wired PS4 Controller
@@ -61,6 +80,7 @@ You may also use your keyboard's number pad when __Num Lock__ is turned off.
 * Retro-bit Sega Saturn Controller
   * Detected as Switch Pro Controller
   * __A__ & __B__ Reversed
+  * __X__ & __Y__ Reversed
 * BEYEE Zero Delay USB Encoder
 
 ## Limitations

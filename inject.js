@@ -48,8 +48,7 @@ const cabControls = function (fcWindow) {
     deselectChannel()
     resetChannelItemStyles()
 
-    const channels = fcDoc.querySelector('.channelsList')
-      .querySelectorAll('.channelItem, .buttonItemWrapper')
+    const channels = fcDoc.querySelectorAll('.channelsList .channelItem')
     const currentChannel = fcDoc.querySelector('.channelsList .active')
 
     let prevChannelIndex = -1
@@ -69,8 +68,7 @@ const cabControls = function (fcWindow) {
     deselectChannel()
     resetChannelItemStyles()
 
-    const channels = fcDoc.querySelector('.channelsList')
-      .querySelectorAll('.channelItem, .buttonItemWrapper')
+    const channels = fcDoc.querySelectorAll('.channelsList .channelItem')
     const currentChannel = fcDoc.querySelector('.channelsList .active')
 
     let nextChannelIndex = 0
@@ -163,6 +161,11 @@ const cabControls = function (fcWindow) {
   function selectSearchEntry(searchEntry) {
     if (!searchEntry) {
       return
+    }
+
+    const navButtonSelected = fcDoc.querySelector('.searchResultsWrapper .button-alt.selected')
+    if (navButtonSelected) {
+      deselectSearchEntry(navButtonSelected)
     }
 
     defocusActiveChannel()
@@ -303,6 +306,118 @@ const cabControls = function (fcWindow) {
         }
         if (searchEntries[nextEntryIndex]) {
           targetSearchEntry = searchEntries[nextEntryIndex]
+        }
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    }
+  }
+
+  function prevWelcomeCategory() {
+    const welcomeCategories = fcDoc.querySelectorAll('.welcomeListGrid, .welcomeListGridBig')
+    const currentSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+    let targetSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper')
+    if (currentSearchEntry) {
+      deselectSearchEntry(currentSearchEntry)
+
+      let prevCatIndex = [...welcomeCategories].indexOf(currentSearchEntry.closest(
+        '.welcomeListGrid, .welcomeListGridBig')) - 1
+      if (prevCatIndex < 0) {
+        prevCatIndex = welcomeCategories.length - 1
+      }
+      if (welcomeCategories[prevCatIndex]) {
+        targetSearchEntry = welcomeCategories[prevCatIndex].querySelector('.gridWrapper')
+      }
+    }
+
+    selectSearchEntry(targetSearchEntry)
+  }
+
+  function nextWelcomeCategory() {
+    const welcomeCategories = fcDoc.querySelectorAll('.welcomeListGrid, .welcomeListGridBig')
+    const currentSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+    let targetSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper')
+    if (currentSearchEntry) {
+      deselectSearchEntry(currentSearchEntry)
+
+      let nextCatIndex = [...welcomeCategories].indexOf(currentSearchEntry.closest(
+        '.welcomeListGrid, .welcomeListGridBig')) + 1
+      if (nextCatIndex > welcomeCategories.length - 1) {
+        nextCatIndex = 0
+      }
+      if (welcomeCategories[nextCatIndex]) {
+        targetSearchEntry = welcomeCategories[nextCatIndex].querySelector('.gridWrapper')
+      }
+    }
+
+    selectSearchEntry(targetSearchEntry)
+  }
+
+  function prevSearchRow() {
+    const searchResultsActive = fcDoc.querySelector('.searchWrapper')
+      .style.display === ''
+
+    if (searchResultsActive) {
+      const grid = Array.from(fcDoc.querySelectorAll('.searchResultsGrid .channelWrapper'))
+      const baseOffset = grid[0].offsetTop
+      const breakIndex = grid.findIndex(item => item.offsetTop > baseOffset)
+      const numPerRow = (breakIndex === -1 ? grid.length : breakIndex)
+
+      const navButtonSelected = fcDoc.querySelector('.searchResultsWrapper .button-alt.selected')
+
+      const currentSearchEntry = fcDoc.querySelector('.searchResultsGrid .channelWrapper.selected')
+      let targetSearchEntry = fcDoc.querySelector('.searchResultsGrid .contentWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll(
+          '.searchResultsGrid .channelWrapper, .searchResultsWrapper .button-alt:not(.disabled)'
+        )
+        let searchEntryIndex = [...searchEntries].indexOf(currentSearchEntry)
+        let prevRowEntryIndex = searchEntryIndex - numPerRow
+        if (prevRowEntryIndex < 0) {
+          prevRowEntryIndex = searchEntryIndex
+        }
+        if (searchEntries[prevRowEntryIndex]) {
+          targetSearchEntry = searchEntries[prevRowEntryIndex]
+        }
+      } else if (navButtonSelected) {
+        deselectSearchEntry(navButtonSelected)
+        const searchEntries = fcDoc.querySelectorAll(
+          '.searchResultsGrid .channelWrapper'
+        )
+        targetSearchEntry = searchEntries[searchEntries.length - 1]
+      }
+
+      selectSearchEntry(targetSearchEntry)
+    }
+  }
+
+  function nextSearchRow() {
+    const searchResultsActive = fcDoc.querySelector('.searchWrapper')
+      .style.display === ''
+
+    if (searchResultsActive) {
+      const grid = Array.from(fcDoc.querySelectorAll('.searchResultsGrid .channelWrapper'))
+      const baseOffset = grid[0].offsetTop
+      const breakIndex = grid.findIndex(item => item.offsetTop > baseOffset)
+      const numPerRow = (breakIndex === -1 ? grid.length : breakIndex)
+
+      const currentSearchEntry = fcDoc.querySelector('.searchResultsGrid .channelWrapper.selected')
+      let targetSearchEntry = fcDoc.querySelector('.searchResultsGrid .channelWrapper')
+      if (currentSearchEntry) {
+        deselectSearchEntry(currentSearchEntry)
+
+        const searchEntries = fcDoc.querySelectorAll(
+          '.searchResultsGrid .channelWrapper, .searchResultsWrapper .button-alt:not(.disabled)'
+        )
+        let searchEntryIndex = [...searchEntries].indexOf(currentSearchEntry)
+        let nextRowEntryIndex = searchEntryIndex + numPerRow
+        if (nextRowEntryIndex > searchEntries.length - 1) {
+          nextRowEntryIndex = searchEntryIndex
+        }
+        if (searchEntries[nextRowEntryIndex]) {
+          targetSearchEntry = searchEntries[nextRowEntryIndex]
         }
       }
 
@@ -703,7 +818,11 @@ const cabControls = function (fcWindow) {
     }
   }
 
-  function cancelAction() {
+  function cancelAction(condition) {
+    if (!condition) {
+      return
+    }
+
     const pendingChallenges = fcDoc.querySelectorAll(
       '.messageWrapper.requestChallenge .cancel-challenge, .messageWrapper.challengeRequested .decline-challenge'
     )
@@ -711,8 +830,28 @@ const cabControls = function (fcWindow) {
       const denyLastChallengeRequest = [...pendingChallenges].slice(-1)[0]
       denyLastChallengeRequest.click()
     }
+
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+
     if (currentColumn === 'channels') {
       leaveChannel()
+    }
+  }
+
+  function toggleSearch() {
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+
+    if (searchActive) {
+      toggleNextChannel()
+      silentNotify('Switch Lobbies')
+    } else {
+      const searchButton = fcDoc.querySelector('.channelsList .buttonItemWrapper')
+      searchButton.click()
+      silentNotify('Browse Games')
     }
   }
 
@@ -726,14 +865,42 @@ const cabControls = function (fcWindow) {
   }
 
   function upAction(condition = true) {
-    if (condition || scrollableColumns.includes(currentColumn)) {
-      prevElement()
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+    const searchResultsActive = fcDoc.querySelector('.searchWrapper')
+      .style.display === ''
+
+    if (searchResultsActive) {
+      prevSearchRow()
+    } else if (searchActive) {
+      if (condition) {
+        prevWelcomeCategory()
+      }
+    } else {
+      if (condition || scrollableColumns.includes(currentColumn)) {
+        prevElement()
+      }
     }
   }
 
   function downAction(condition = true) {
-    if (condition || scrollableColumns.includes(currentColumn)) {
-      nextElement()
+    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
+        '.searchWrapper')
+      .style.display === ''
+    const searchResultsActive = fcDoc.querySelector('.searchWrapper')
+      .style.display === ''
+
+    if (searchResultsActive) {
+      nextSearchRow()
+    } else if (searchActive) {
+      if (condition) {
+        nextWelcomeCategory()
+      }
+    } else {
+      if (condition || scrollableColumns.includes(currentColumn)) {
+        nextElement()
+      }
     }
   }
 
@@ -780,8 +947,12 @@ const cabControls = function (fcWindow) {
   allKeys.set('down', 'Numpad2')
   allKeys.set('left', 'Numpad4')
   allKeys.set('right', 'Numpad6')
-  allKeys.set('toggle', 'Numpad0')
-  allKeys.set('cancel', 'NumpadDecimal')
+  allKeys.set('a', 'Numpad0')
+  allKeys.set('b', 'NumpadDecimal')
+  allKeys.set('x', 'Numpad7')
+  allKeys.set('y', 'Numpad9')
+  allKeys.set('lb', 'NumpadDivide')
+  allKeys.set('rb', 'NumpadMultiply')
 
   allKeys.set('spectateRandomMatch', 'F6')
 
@@ -800,6 +971,9 @@ const cabControls = function (fcWindow) {
     reconcileClickedChannels()
 
     if (!e.getModifierState('NumLock')) {
+      if (Array.from(allKeys.values()).includes(e.code)) {
+        e.preventDefault()
+      }
       switch (e.code) {
       case allKeys.get('up'):
         upAction(!keyHeld.get(e.code))
@@ -813,11 +987,26 @@ const cabControls = function (fcWindow) {
       case allKeys.get('right'):
         rightAction(!keyHeld.get(e.code))
         break
-      case allKeys.get('toggle'):
+      case allKeys.get('a'):
         toggleAction(!keyHeld.get(e.code))
         break
-      case allKeys.get('cancel'):
+      case allKeys.get('b'):
         cancelAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('y'):
+        if (!keyHeld.get(e.code)) {
+          toggleSearch()
+        }
+        break
+      case allKeys.get('lb'):
+        if (!keyHeld.get(e.code)) {
+          togglePrevChannel()
+        }
+        break
+      case allKeys.get('rb'):
+        if (!keyHeld.get(e.code)) {
+          toggleNextChannel()
+        }
         break
       case allKeys.get('spectateRandomMatch'):
         if (!keyHeld.get(e.code)) {
@@ -839,13 +1028,21 @@ const cabControls = function (fcWindow) {
   allBtns.set('down', 13)
   allBtns.set('left', 14)
   allBtns.set('right', 15)
-  allBtns.set('toggle', 0)
-  allBtns.set('cancel', 1)
+  allBtns.set('a', 0)
+  allBtns.set('b', 1)
+  allBtns.set('x', 2)
+  allBtns.set('y', 3)
+  allBtns.set('lb', 4)
+  allBtns.set('rb', 5)
 
   function applyCustomControllerProfiles(gamepad) {
     if (gamepad.id === 'Astro city mini Arcade stick (Vendor: 0ca3 Product: 0028)') {
-      allBtns.set('toggle', 2)
-      allBtns.set('cancel', 1)
+      allBtns.set('a', 2)
+      allBtns.set('b', 1)
+      allBtns.set('x', 3)
+      allBtns.set('y', 0)
+      allBtns.set('lb', 4)
+      allBtns.set('rb', 5)
     }
   }
 
@@ -881,16 +1078,31 @@ const cabControls = function (fcWindow) {
             case allBtns.get('down'):
               downAction(!btnHeld.get(gp.index)[b])
               break
+            case allBtns.get('lb'):
+              if (!btnHeld.get(gp.index)[b]) {
+                togglePrevChannel()
+              }
+              break
+            case allBtns.get('rb'):
+              if (!btnHeld.get(gp.index)[b]) {
+                toggleNextChannel()
+              }
+              break
+            case allBtns.get('y'):
+              if (!btnHeld.get(gp.index)[b]) {
+                toggleSearch()
+              }
+              break
             case allBtns.get('left'):
               leftAction(!btnHeld.get(gp.index)[b])
               break
             case allBtns.get('right'):
               rightAction(!btnHeld.get(gp.index)[b])
               break
-            case allBtns.get('toggle'):
+            case allBtns.get('a'):
               toggleAction(!btnHeld.get(gp.index)[b])
               break
-            case allBtns.get('cancel'):
+            case allBtns.get('b'):
               cancelAction(!btnHeld.get(gp.index)[b])
               break
             }
