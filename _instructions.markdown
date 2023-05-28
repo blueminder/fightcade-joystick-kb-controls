@@ -8,7 +8,7 @@ In the process of turning my mini arcade cabinet into a dedicated Fightcade mach
 Controls are optimized for switching between game lobbies, challenging players, spectating matches, and loading the emulator offline for testing/training. As much as I could, I wanted to make sure that any actions performed via game controller did not require an external keyboard or mouse use to close external windows.
 
 ## Installation
-1. Download [inject.js](https://gist.githubusercontent.com/blueminder/818745061ac4b9dfd3b7f7f19d5343bb/raw/b2d476370eefc449cd1bf64216ef1f3bfa5292c8/inject.js) and place it in your `Fightcade\fc2-electron\resources\app\inject` directory.
+1. Download [inject.js](#file-inject-js) (Right click on "Raw" link to save) and place it in your `Fightcade\fc2-electron\resources\app\inject` directory.
 2. Open Fightcade and press a button on your game controller. You will see a notification that says *Game Controller Initialized*.
 
 ## Usage
@@ -33,6 +33,7 @@ __Up__ and __Down__
 * Selects Active Match
 * Selects Search Categories (On Search Welcome Screen)
 * Selects Search Result On Next Row
+* Selects User Status (On User Status Menu)
 
 __Button A (or 0)__
 * Accepts Last Pending Challenge (in any lane)
@@ -42,10 +43,15 @@ __Button A (or 0)__
 * Opens Test Game
 * Opens Training Mode
 * Opens Selected Game Lobby (In Search)
+* Toggles User Status Change (Active / Away)
 
 __Button B (or 1)__
 * Declines Last Pending Challenge (in any lane)
 * Deselects Search Result
+* Closes User Status Menu
+
+__Button X (or 2)__
+* Toggle User Status Menu (Active / Away)
 
 __Button Y (or 3)__
 * Toggle Search / Lobby Selection
@@ -62,6 +68,7 @@ You may also use your keyboard's number pad when __Num Lock__ is turned off.
 * __8__ & __2__ correspond with __Up__ & __Down__
 * __0__ corresponds with __Button A__
 * __.__ corresponds with __Button B__
+* __7__ corresponds with __Button X__
 * __9__ corresponds with __Button Y__
 * __/__ corresponds with __Left Bumper__
 * __*__ corresponds with __Right Bumper__

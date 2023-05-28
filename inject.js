@@ -90,10 +90,21 @@ const cabControls = function (fcWindow) {
         '.searchWrapper')
       .style.display === ''
     if (searchActive) {
-      const currentSearchEntry = fcDoc.querySelector(
-        '.searchResultsWrapper .searchResultsGrid .channelWrapper.selected, .contentWrapper .gridWrapper.selected'
-      )
-      deselectSearchEntry(currentSearchEntry)
+      let searchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper.selected')
+      if (fcDoc.querySelector('.welcomeWrapper')
+        .style.display === 'none') {
+        searchEntry = fcDoc.querySelector(
+          '.searchResultsGrid .channelWrapper.selected, .searchResultsWrapper .button-alt.selected:not(.disabled)'
+        )
+      }
+
+      if (searchEntry) {
+        deselectSearchEntry(searchEntry)
+      }
+
+      const firstSearchEntry = fcDoc.querySelector('.contentWrapper .gridWrapper')
+      selectSearchEntry(firstSearchEntry)
+      deselectSearchEntry(firstSearchEntry)
 
       const searchBtn = fcDoc.querySelector('.channelsList .buttonItemWrapper')
       searchBtn.click()
@@ -792,7 +803,11 @@ const cabControls = function (fcWindow) {
       '.messageWrapper.challengeRequested .message .challengeContent .accept-challenge'
     )
 
-    if (pendingChallenges.length > 0) {
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
+
+    if (userStateMenuActive) {
+      toggleSelectedUserState()
+    } else if (pendingChallenges.length > 0) {
       const lastChallenge = [...pendingChallenges].slice(-1)[0]
       lastChallenge.click()
     } else {
@@ -826,16 +841,14 @@ const cabControls = function (fcWindow) {
     const pendingChallenges = fcDoc.querySelectorAll(
       '.messageWrapper.requestChallenge .cancel-challenge, .messageWrapper.challengeRequested .decline-challenge'
     )
-    if (pendingChallenges.length > 0) {
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
+
+    if (userStateMenuActive) {
+      toggleUserStateMenu()
+    } else if (pendingChallenges.length > 0) {
       const denyLastChallengeRequest = [...pendingChallenges].slice(-1)[0]
       denyLastChallengeRequest.click()
-    }
-
-    const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
-        '.searchWrapper')
-      .style.display === ''
-
-    if (currentColumn === 'channels') {
+    } else if (currentColumn === 'channels') {
       leaveChannel()
     }
   }
@@ -844,15 +857,111 @@ const cabControls = function (fcWindow) {
     const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
         '.searchWrapper')
       .style.display === ''
+    const openChannels = fcDoc.querySelectorAll('.channelsList .channelItemWrapper')
 
     if (searchActive) {
-      toggleNextChannel()
-      silentNotify('Switch Lobbies')
+      if (openChannels.length > 0) {
+        toggleNextChannel()
+        silentNotify('Switch Lobbies')
+      } else {
+        leaveChannel()
+      }
     } else {
       const searchButton = fcDoc.querySelector('.channelsList .buttonItemWrapper')
       searchButton.click()
       silentNotify('Browse Games')
     }
+  }
+
+  function toggleUserStateMenu() {
+    deselectUserState()
+    selfUserAvatar = fcDoc.querySelector('.userButton .userAvatar')
+    selfUserAvatar.click()
+  }
+
+  function deselectUserState() {
+    const selectedUserState = fcDoc.querySelector('.userStateMenu .optionWrapper.selected')
+    if (!selectedUserState) {
+      return
+    }
+
+    selectedUserState.style.borderColor = ''
+    selectedUserState.style.borderStyle = ''
+    selectedUserState.classList.remove('selected')
+  }
+
+  function toggleSelectedUserState() {
+    const selectedUserState = fcDoc.querySelector('.userStateMenu .optionWrapper.selected')
+    if (!selectedUserState) {
+      return
+    }
+
+    deselectUserState()
+
+    userStateButton = selectedUserState.querySelector('.stateShape')
+    userStateButton.click()
+  }
+
+  function selectUserState(userState) {
+    if (!userState) {
+      return
+    }
+
+    deselectUserState()
+
+    userState.classList.add('selected')
+    const accentColor = appStyle.getPropertyValue('--accentColor')
+    userState.style.borderColor = accentColor
+    userState.style.borderStyle = 'solid'
+  }
+
+  function selectPrevUserState() {
+    const userStates = fcDoc.querySelectorAll('.userStateMenu .optionWrapper')
+    if (userStates.length == 0) {
+      return
+    }
+
+    let selectedUserState = fcDoc.querySelector('.userStateMenu .optionWrapper.selected')
+
+    if (!selectedUserState) {
+      const lastUserState = userStates[userStates.length - 1]
+      selectUserState(lastUserState)
+      return
+    }
+
+    let prevUserStateIndex = -1
+
+    prevUserStateIndex = [...userStates].indexOf(selectedUserState) - 1
+    if (prevUserStateIndex < 0) {
+      prevUserStateIndex = userStates.length - 1
+    }
+    selectedUserState = userStates[prevUserStateIndex]
+
+    selectUserState(userStates[prevUserStateIndex])
+  }
+
+  function selectNextUserState() {
+    const userStates = fcDoc.querySelectorAll('.userStateMenu .optionWrapper')
+    if (userStates.length == 0) {
+      return
+    }
+
+    let selectedUserState = fcDoc.querySelector('.userStateMenu .optionWrapper.selected')
+
+    if (!selectedUserState) {
+      const firstUserState = userStates[0]
+      selectUserState(firstUserState)
+      return
+    }
+
+    let nextUserStateIndex = 0
+
+    nextUserStateIndex = [...userStates].indexOf(selectedUserState) + 1
+    if (nextUserStateIndex > userStates.length - 1) {
+      nextUserStateIndex = 0
+    }
+
+    selectUserState(userStates[nextUserStateIndex])
   }
 
   function spectateRandomMatch() {
@@ -870,8 +979,13 @@ const cabControls = function (fcWindow) {
       .style.display === ''
     const searchResultsActive = fcDoc.querySelector('.searchWrapper')
       .style.display === ''
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
 
-    if (searchResultsActive) {
+    if (userStateMenuActive) {
+      if (condition) {
+        selectPrevUserState()
+      }
+    } else if (searchResultsActive) {
       prevSearchRow()
     } else if (searchActive) {
       if (condition) {
@@ -890,8 +1004,13 @@ const cabControls = function (fcWindow) {
       .style.display === ''
     const searchResultsActive = fcDoc.querySelector('.searchWrapper')
       .style.display === ''
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
 
-    if (searchResultsActive) {
+    if (userStateMenuActive) {
+      if (condition) {
+        selectNextUserState()
+      }
+    } else if (searchResultsActive) {
       nextSearchRow()
     } else if (searchActive) {
       if (condition) {
@@ -908,8 +1027,10 @@ const cabControls = function (fcWindow) {
     const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
         '.searchWrapper')
       .style.display === ''
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
 
-    if (condition || searchActive) {
+    if (userStateMenuActive) {
+    } else if (condition || searchActive) {
       if (searchActive) {
         prevSearchEntry()
       } else {
@@ -922,8 +1043,10 @@ const cabControls = function (fcWindow) {
     const searchActive = fcDoc.querySelector('.channelsList .buttonItemWrapper.active') || fcDoc.querySelector(
         '.searchWrapper')
       .style.display === ''
+    const userStateMenuActive = fcDoc.querySelector('.userStateMenu.active')
 
-    if (condition || searchActive) {
+    if (userStateMenuActive) {
+    } else if (condition || searchActive) {
       if (searchActive) {
         nextSearchEntry()
       } else {
@@ -992,6 +1115,11 @@ const cabControls = function (fcWindow) {
         break
       case allKeys.get('b'):
         cancelAction(!keyHeld.get(e.code))
+        break
+      case allKeys.get('x'):
+        if (!keyHeld.get(e.code)) {
+          toggleUserStateMenu()
+        }
         break
       case allKeys.get('y'):
         if (!keyHeld.get(e.code)) {
@@ -1086,6 +1214,11 @@ const cabControls = function (fcWindow) {
             case allBtns.get('rb'):
               if (!btnHeld.get(gp.index)[b]) {
                 toggleNextChannel()
+              }
+              break
+            case allBtns.get('x'):
+              if (!btnHeld.get(gp.index)[b]) {
+                toggleUserStateMenu()
               }
               break
             case allBtns.get('y'):
